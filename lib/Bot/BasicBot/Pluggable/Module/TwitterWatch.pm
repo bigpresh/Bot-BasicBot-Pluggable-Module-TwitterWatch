@@ -4,6 +4,7 @@ use strict;
 use base 'Bot::BasicBot::Pluggable::Module';
 use Net::Twitter::Lite;
 use Data::Dump;
+use HTML::Entities;
 
 our $VERSION = '0.01';
 
@@ -90,7 +91,8 @@ sub tick {
                 grep { $_->{id} > $last_id } @{ $results->{results} }
             ) {
                 push @results, sprintf 'Twitter: @%s: "%s"',
-                    $result->{from_user}, $result->{text};
+                    $result->{from_user}, 
+                    HTML::Entities::decode_entities($result->{text});
             }
 
             # Remember the ID of the highest match
