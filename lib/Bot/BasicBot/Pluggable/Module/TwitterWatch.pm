@@ -19,10 +19,13 @@ Watches Twitter for tweets matching given search patterns, and reports them.
 =head1 SYNOPSIS
 
 Load the module as with any other Bot::BasicBot::Pluggable module, then tell it
-what to monitor:
+what to monitor - use these commands within a channel:
 
-  !monitortwitter search term here
-  !unmonitortwitter search term here
+  !twitterwatch search term here
+  !twitterunwatch search term here
+  !twittersearches
+
+Each channel has its own just of searches stored.
 
 =cut
 
@@ -102,6 +105,7 @@ sub tick {
     }
     
     $self->set('twitter_last_searched', time);
+    $self->set('twitter_searches', $searches);
             
 }
 
