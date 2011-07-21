@@ -1,0 +1,4 @@
+
+* Avoid duplicate results if a tweet matches more than one search term.
+(Do the searching first, whacking results into a hash keyed on tweet ID, then go
+through and announce them at the end.)
