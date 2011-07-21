@@ -67,7 +67,7 @@ sub said {
 sub tick {
     my $self = shift;
     warn "tick() called";
-    my $seconds_between_checks = $self->get('twitter_search_wait') || 30;
+    my $seconds_between_checks = $self->get('twitter_search_wait') || 60 * 3;
     return if time - $self->get('twitter_last_searched') 
         < $seconds_between_checks;
 
