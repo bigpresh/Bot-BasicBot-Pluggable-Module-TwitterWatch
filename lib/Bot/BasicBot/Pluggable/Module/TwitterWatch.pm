@@ -42,7 +42,7 @@ sub said {
         my $chansearches = $searches->{ lc $mess->{channel} };
 
         if (lc $command eq 'twitterwatch') {
-            $chansearches->{$params} = time;
+            $chansearches->{$params} = 0;
             $message =  "OK, now watching for '$params'";
         } elsif (lc $command eq 'twitterunwatch') {
             if (exists $chansearches->{$params}) {
