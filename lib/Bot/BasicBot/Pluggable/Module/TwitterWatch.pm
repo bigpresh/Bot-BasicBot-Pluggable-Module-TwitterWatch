@@ -87,12 +87,17 @@ sub tick {
                 since_id => $last_id,
             }) or return;
 
-            for my $result (
-                grep { $_->{id} > $last_id } @{ $results->{results} }
-            ) {
-                push @results, sprintf 'Twitter: @%s: "%s"',
-                    $result->{from_user}, 
-                    HTML::Entities::decode_entities($result->{text});
+            # Only process the results if we had a previous max ID; if not, this
+            # must be a newly-added search term, so don't spam the channel with
+            # all the initial matches, just find new ones from now on
+            if ($last_id) {
+                for my $result (
+                    grep { $_->{id} > $last_id } @{ $results->{results} }
+                ) {
+                    push @results, sprintf 'Twitter: @%s: "%s"',
+                        $result->{from_user}, 
+                        HTML::Entities::decode_entities($result->{text});
+                }
             }
 
             # Remember the ID of the highest match
