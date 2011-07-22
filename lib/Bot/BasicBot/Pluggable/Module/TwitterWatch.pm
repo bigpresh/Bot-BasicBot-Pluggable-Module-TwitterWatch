@@ -100,6 +100,7 @@ sub tick {
             if ($last_id) {
                 my %tweets_from_user;
                 for my $result (
+                    sort { $a->{id} <=> $b->{id} }
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
                     if ($ignore->{lc $result->{from_user}}) {
