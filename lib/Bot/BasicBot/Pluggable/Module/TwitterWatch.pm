@@ -98,10 +98,12 @@ sub tick {
             # must be a newly-added search term, so don't spam the channel with
             # all the initial matches, just find new ones from now on
             if ($last_id) {
+                my %tweets_from_user;
                 for my $result (
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
                     next if $ignore->{$result->{from_user}};
+                    next if $tweets_from_user{$result->{from_user}} > 3;
                     push @results, sprintf 'Twitter: @%s: "%s"',
                         $result->{from_user}, 
                         HTML::Entities::decode_entities($result->{text});
