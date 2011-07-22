@@ -25,6 +25,7 @@ what to monitor - use these commands within a channel:
   !twitterwatch search term here
   !twitterunwatch search term here
   !twittersearches
+  !twitterignore username
 
 Each channel has its own just of searches stored.
 
@@ -54,7 +55,12 @@ sub said {
         } elsif (lc $command eq 'twittersearches') {
             $message = "Currently watching for: "
                 . join ',', map { qq["$_"] } keys %$chansearches;
+        } elsif (lc $command eq 'twitterignore') {
+            my $ignore = $self->get('twitter_ignore') || {};
+            $ignore->{$params}++;
+            $message = "OK, ignoring tweets from $params";
         }
+
    
     $self->set('twitter_searches', $searches);
 
@@ -73,7 +79,8 @@ sub tick {
 
     # OK, time to do the searches:
     my $twitter = Net::Twitter::Lite->new;
-    my $searches = $self->get('twitter_searches');
+    my $searches = $self->get('twitter_searches') || {};
+    my $ignore   = $self->get('twitter_ignore')   || {};
 
     warn "Search settings: " . Data::Dump::dump($searches);
     for my $channel (keys %$searches) {
@@ -94,6 +101,7 @@ sub tick {
                 for my $result (
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
+                    next if $ignore->{$result->{from_user}};
                     push @results, sprintf 'Twitter: @%s: "%s"',
                         $result->{from_user}, 
                         HTML::Entities::decode_entities($result->{text});
