@@ -108,6 +108,16 @@ sub tick {
                             . $result->{text};
                     }
                     next if $tweets_from_user{$result->{from_user}} > 3;
+                    
+                    # See whether this is a newly-created spam account:
+                    my $user_details = $twitter->lookup_users(
+                        { screen_name => $result->{from_user} }
+                    ) or next;
+                    if ($user_details->{statuses_count} < 20) {
+                        warn "Ignoring new spam account $result->{from_user}";
+                        next;
+                    }
+
                     push @results, sprintf 'Twitter: @%s: "%s"',
                         $result->{from_user}, 
                         HTML::Entities::decode_entities($result->{text});
