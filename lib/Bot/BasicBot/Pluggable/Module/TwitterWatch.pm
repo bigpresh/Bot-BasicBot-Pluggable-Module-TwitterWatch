@@ -113,7 +113,7 @@ sub tick {
                     my $user_details = $twitter->lookup_users(
                         { screen_name => $result->{from_user} }
                     ) or next;
-                    if ($user_details->{statuses_count} < 20) {
+                    if ($user_details->{statuses_count} < 40) {
                         warn "Ignoring new spam account $result->{from_user}";
                         next;
                     }
