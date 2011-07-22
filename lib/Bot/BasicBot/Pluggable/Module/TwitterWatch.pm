@@ -85,7 +85,7 @@ sub tick {
     warn "Search settings: " . Data::Dump::dump($searches);
     for my $channel (keys %$searches) {
         warn "Doing searches for $channel";
-        my @results;
+        my %results;
         for my $searchterm (keys %{ $searches->{$channel} }) {
             my $last_id = $searches->{$channel}{$searchterm} || 0;
             warn "Searching for '$searchterm' after $last_id on behalf of $channel";
@@ -100,7 +100,6 @@ sub tick {
             if ($last_id) {
                 my %tweets_from_user;
                 for my $result (
-                    sort { $a->{id} <=> $b->{id} }
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
                     if ($ignore->{lc $result->{from_user}}) {
@@ -120,16 +119,30 @@ sub tick {
                         warn "Ignoring new spam account $result->{from_user}";
                         next;
                     }
+                    
+                    # Results are stored in a hash keyed on ID, so tweets that
+                    # match more than one search only appear once
+                    $results{ $result->{id} } = $result;
 
-                    push @results, sprintf 'Twitter: @%s: "%s"',
-                        $result->{from_user}, 
-                        HTML::Entities::decode_entities($result->{text});
                 }
             }
 
-            # Remember the ID of the highest match
+            # Remember the ID of the highest match for this search, so we know
+            # where to start from next time
             $searches->{$channel}{$searchterm} = $results->{max_id};
         }
+
+
+        # Right, now go through the results for the searches for this channel
+        # and assemble the messages we're going to send.
+        my @results;
+        for my $tweetid (reverse sort keys %results) {
+            my $result = $results{$tweetid};
+            push @results, sprintf 'Twitter: @%s: "%s"',
+                $result->{from_user}, 
+                HTML::Entities::decode_entities($result->{text});
+        }
+
 
 
         # TODO: probably check if we found too many results to sensibly relay
