@@ -105,6 +105,7 @@ sub tick {
                     if ($ignore->{lc $result->{from_user}}) {
                         warn "Ignoring tweet from $result->{from_user} :"
                             . $result->{text};
+                        return;
                     }
                     next if $tweets_from_user{$result->{from_user}} > 3;
                     
