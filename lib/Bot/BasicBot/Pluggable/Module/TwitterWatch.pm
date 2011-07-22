@@ -38,6 +38,7 @@ sub said {
     my $message;
     if (my($command, $params) = $mess->{body} =~ /!(twitter\w+) (.+)/i) {
         $params = lc $params;
+        $params =~ s/\s+$//;
         my $searches = $self->get('twitter_searches') || {};
         $searches->{ lc $mess->{channel} } ||= {};
         my $chansearches = $searches->{ lc $mess->{channel} };
@@ -58,7 +59,7 @@ sub said {
         } elsif (lc $command eq 'twitterignore') {
             my $ignore = $self->get('twitter_ignore') || {};
             $ignore->{$params}++;
-            $message = "OK, ignoring tweets from $params";
+            $message = "OK, ignoring tweets from '$params'";
         }
 
    
@@ -102,7 +103,10 @@ sub tick {
                 for my $result (
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
-                    next if $ignore->{$result->{from_user}};
+                    if ($ignore->{lc $result->{from_user}}) {
+                        warn "Ignoring tweet from $result->{from_user} :"
+                            . $result->{text};
+                    }
                     next if $tweets_from_user{$result->{from_user}} > 3;
                     push @results, sprintf 'Twitter: @%s: "%s"',
                         $result->{from_user}, 
