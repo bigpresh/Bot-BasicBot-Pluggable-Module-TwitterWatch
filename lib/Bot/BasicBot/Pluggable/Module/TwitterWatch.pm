@@ -112,7 +112,9 @@ sub tick {
                     # See whether this is a newly-created spam account:
                     my $user_details = $twitter->lookup_users(
                         { screen_name => $result->{from_user} }
-                    ) or next;
+                    );
+                    my $user_details = $user_details->[0]
+                        or next;
                     if ($user_details->{statuses_count} < 40) {
                         warn "Ignoring new spam account $result->{from_user}";
                         next;
