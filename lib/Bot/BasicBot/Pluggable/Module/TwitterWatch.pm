@@ -111,7 +111,7 @@ sub tick {
                     # Retweets can be a bit spammy at times, so skip them:
                     next if $result->{text} =~ /^RT/;
 
-                    next if $tweets_from_user{$result->{from_user}} > 3;
+                    next if ++$tweets_from_user{$result->{from_user}} > 3;
                     
                     # See whether this is a newly-created spam account:
                     my $user_details = $twitter->lookup_users(
