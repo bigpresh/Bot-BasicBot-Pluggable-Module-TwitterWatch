@@ -12,7 +12,10 @@ WriteMakefile(
       : ()),
     PL_FILES            => {},
     PREREQ_PM => {
-        'Test::More' => 0,
+        'Test::More'         => 0,
+        'Bot::BasicBot::Pluggable::Module' => 0,
+        'HTML::Entities'     => 0,
+        'Net::Twitter::Lite' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Bot-BasicBot-Pluggable-Module-TwitterWatch-*' },
