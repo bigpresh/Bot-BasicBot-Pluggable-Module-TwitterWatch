@@ -1,4 +1,16 @@
 
 * Avoid duplicate results if a tweet matches more than one search term.
-(Do the searching first, whacking results into a hash keyed on tweet ID, then go
-through and announce them at the end.)
+  (Do the searching first, whacking results into a hash keyed on tweet ID, then
+  go through and announce them at the end.)
+
+* Add option to limit number of hits to relay, in case there's a lot of matching
+  tweets all of a sudden
+
+* Add option to exclude tweets based on a regex
+
+* Add option to attempt to detect the language of the tweet and only relay it if
+  it matches a set language
+
+* Require user to be auth'd to issue commands
+
+
