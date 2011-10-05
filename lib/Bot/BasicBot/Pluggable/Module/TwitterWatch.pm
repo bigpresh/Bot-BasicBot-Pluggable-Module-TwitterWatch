@@ -3,7 +3,6 @@ package Bot::BasicBot::Pluggable::Module::TwitterWatch;
 use strict;
 use base 'Bot::BasicBot::Pluggable::Module';
 use Net::Twitter::Lite;
-use Data::Dump;
 use HTML::Entities;
 
 our $VERSION = '0.01';
