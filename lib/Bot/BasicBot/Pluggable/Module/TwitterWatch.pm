@@ -65,7 +65,6 @@ sub said {
    
     $self->set('twitter_searches', $searches);
 
-    warn "Searches after command: " . Data::Dump::dump($searches);
     return $message;
     }
 }
@@ -82,9 +81,7 @@ sub tick {
     my $searches = $self->get('twitter_searches') || {};
     my $ignore   = $self->get('twitter_ignore')   || {};
 
-    warn "Search settings: " . Data::Dump::dump($searches);
     for my $channel (keys %$searches) {
-        warn "Doing searches for $channel";
         my %results;
         for my $searchterm (keys %{ $searches->{$channel} }) {
             my $last_id = $searches->{$channel}{$searchterm} || 0;
