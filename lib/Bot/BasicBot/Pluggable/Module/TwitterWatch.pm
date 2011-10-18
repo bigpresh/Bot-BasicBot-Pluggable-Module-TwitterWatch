@@ -5,7 +5,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 use Net::Twitter::Lite;
 use HTML::Entities;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -35,7 +35,13 @@ sub said {
     return unless $pri == 2;
 
     my $message;
-    if (my($command, $params) = $mess->{body} =~ /!(twitter\w+) (.+)/i) {
+    if (my($command, $params) = $mess->{body} =~ /^!(twitter\w+) (.+)/i) {
+        # We need to know what channel we're talking about, so if this was a
+        # direct message, complain:
+        if ($mess->{channel} eq 'msg') {
+            return "Use the command in which the search results should appear";
+        }
+
         $params = lc $params;
         $params =~ s/\s+$//;
         my $searches = $self->get('twitter_searches') || {};
