@@ -102,29 +102,30 @@ sub tick {
             # all the initial matches, just find new ones from now on
             if ($last_id) {
                 my %tweets_from_user;
+                result:
                 for my $result (
                     grep { $_->{id} > $last_id } @{ $results->{results} }
                 ) {
                     if ($ignore->{lc $result->{from_user}}) {
                         warn "Ignoring tweet from $result->{from_user} :"
                             . $result->{text};
-                        return;
+                        next;
                     }
 
                     # Retweets can be a bit spammy at times, so skip them:
-                    next if $result->{text} =~ /^RT/;
+                    next result if $result->{text} =~ /^RT/;
 
-                    next if ++$tweets_from_user{$result->{from_user}} > 3;
+                    next result if ++$tweets_from_user{$result->{from_user}} > 3;
                     
                     # See whether this is a newly-created spam account:
                     my $user_details = $twitter->lookup_users(
                         { screen_name => $result->{from_user} }
                     );
                     $user_details = $user_details->[0]
-                        or next;
+                        or next result;
                     if ($user_details->{statuses_count} < 40) {
                         warn "Ignoring new spam account $result->{from_user}";
-                        next;
+                        next result;
                     }
                     
                     # Results are stored in a hash keyed on ID, so tweets that
