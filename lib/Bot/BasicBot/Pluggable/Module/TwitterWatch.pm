@@ -64,6 +64,7 @@ sub said {
         } elsif (lc $command eq 'twitterignore') {
             my $ignore = $self->get('twitter_ignore') || {};
             $ignore->{$params}++;
+            $self->set('twitter_ignore', $ignore);
             $message = "OK, ignoring tweets from '$params'";
         }
 
