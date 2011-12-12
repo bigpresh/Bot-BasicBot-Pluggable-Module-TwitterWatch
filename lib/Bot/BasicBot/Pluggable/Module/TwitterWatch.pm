@@ -35,7 +35,7 @@ sub said {
     return unless $pri == 2;
 
     my $message;
-    if (my($command, $params) = $mess->{body} =~ /^!(twitter\w+) (.+)?/i) {
+    if (my($command, $params) = $mess->{body} =~ /^!(twitter\w+) \s* (.+)?/x) {
         # We need to know what channel we're talking about, so if this was a
         # direct message, complain:
         if ($mess->{channel} eq 'msg') {
