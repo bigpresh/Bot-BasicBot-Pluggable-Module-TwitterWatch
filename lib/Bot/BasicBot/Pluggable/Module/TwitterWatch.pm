@@ -2,7 +2,8 @@ package Bot::BasicBot::Pluggable::Module::TwitterWatch;
 
 use strict;
 use base 'Bot::BasicBot::Pluggable::Module';
-use Net::Twitter::Lite;
+
+use Net::Twitter::Lite::WithAPIv1_1;
 use HTML::Entities;
 
 our $VERSION = '0.02';
@@ -27,6 +28,29 @@ what to monitor - use these commands within a channel:
   !twitterignore username
 
 Each channel has its own just of searches stored.
+
+Twitter 1.1 API update
+
+After Twitter's 1.1 API we are now required to provide authentication details
+
+read the Net::Twitter::Manual::MigratingToV1_1 doc for more info
+
+and these pages too...
+http://dev.twitter.com/docs/auth
+http://dev.twitter.com/discussions/631
+http://dev.twitter.com/discussions/474
+
+get your magical auth details from twitter
+
+load your TwitterWatch module, as usual
+  my $tw = $bot->load("TwitterWatch");
+
+then pass TwitterWatch your twitter auth details
+
+ $tw->set('access_token'          => 'aaaa');
+ $tw->set('access_token_secret'   => 'bbbc'),
+ $tw->set('consumer_key'          => 'cccc'),
+ $tw->set('consumer_secret'       => 'dddd'),
 
 =cut
 
@@ -68,7 +92,6 @@ sub said {
             $message = "OK, ignoring tweets from '$params'";
         }
 
-   
     $self->set('twitter_searches', $searches);
 
     return $message;
@@ -77,57 +100,66 @@ sub said {
 
 # Tick is called automatically every 5 seconds
 sub tick {
+
     my $self = shift;
     my $seconds_between_checks = $self->get('twitter_search_wait') || 60 * 3;
-    return if time - $self->get('twitter_last_searched') 
+    return if time - $self->get('twitter_last_searched')
         < $seconds_between_checks;
 
     # OK, time to do the searches:
-    my $twitter = Net::Twitter::Lite->new;
+
+    my $twitter = Net::Twitter::Lite::WithAPIv1_1->new(
+        'access_token'        => $self->get('access_token'),
+        'access_token_secret' => $self->get('access_token_secret'),
+        'consumer_key'        => $self->get('consumer_key'),
+        'consumer_secret'     => $self->get('consumer_secret'),
+    );
+
     my $searches = $self->get('twitter_searches') || {};
     my $ignore   = $self->get('twitter_ignore')   || {};
 
     for my $channel (keys %$searches) {
         my %results;
         for my $searchterm (keys %{ $searches->{$channel} }) {
+
             my $last_id = $searches->{$channel}{$searchterm} || 0;
+
             warn "Searching for '$searchterm' after $last_id on behalf of $channel";
             my $results = $twitter->search({
                 q        => $searchterm,
                 since_id => $last_id,
-            }) or return;
+                count => 1,
+            }) ;
+
+            return unless $results;
 
             # Only process the results if we had a previous max ID; if not, this
             # must be a newly-added search term, so don't spam the channel with
             # all the initial matches, just find new ones from now on
+
+
             if ($last_id) {
+
                 my %tweets_from_user;
                 result:
-                for my $result (
-                    grep { $_->{id} > $last_id } @{ $results->{results} }
-                ) {
+
+                  for my $result ( @{$results->{statuses}} ) {
+                         next unless  $result->{id} > $last_id ;
+#                        print "$result->{text}\n";
+
                     if ($ignore->{lc $result->{from_user}}) {
                         warn "Ignoring tweet from $result->{from_user} :"
                             . $result->{text};
                         next;
                     }
-
                     # Retweets can be a bit spammy at times, so skip them:
                     next result if $result->{text} =~ /^RT/;
 
                     next result if ++$tweets_from_user{$result->{from_user}} > 3;
-                    
+
                     # See whether this is a newly-created spam account:
-                    my $user_details = $twitter->lookup_users(
-                        { screen_name => $result->{from_user} }
-                    );
-                    $user_details = $user_details->[0]
-                        or next result;
-                    if ($user_details->{statuses_count} < 40) {
-                        warn "Ignoring new spam account $result->{from_user}";
-                        next result;
-                    }
-                    
+                    next result if $result->{user}->{statuses_count} < 40 ;
+
                     # Results are stored in a hash keyed on ID, so tweets that
                     # match more than one search only appear once
                     $results{ $result->{id} } = $result;
@@ -137,9 +169,10 @@ sub tick {
 
             # Remember the ID of the highest match for this search, so we know
             # where to start from next time
-            $searches->{$channel}{$searchterm} = $results->{max_id};
-        }
 
+            $searches->{$channel}{$searchterm} =  $results->{search_metadata}->{max_id};
+
+        }
 
         # Right, now go through the results for the searches for this channel
         # and assemble the messages we're going to send.
@@ -147,24 +180,21 @@ sub tick {
         for my $tweetid (reverse sort keys %results) {
             my $result = $results{$tweetid};
             push @results, sprintf 'Twitter: @%s: "%s"',
-                $result->{from_user}, 
+                $result->{user}->{screen_name},
                 HTML::Entities::decode_entities($result->{text});
         }
 
-
-
         # TODO: probably check if we found too many results to sensibly relay
+
         for my $result (@results) {
             $self->say(channel => $channel, body => $result);
         }
     }
-    
+
     $self->set('twitter_last_searched', time);
     $self->set('twitter_searches', $searches);
-            
+
 }
-
-
 
 =head1 AUTHOR
 
